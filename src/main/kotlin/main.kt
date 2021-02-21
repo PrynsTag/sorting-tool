@@ -1,6 +1,6 @@
 import java.util.*
 
-class Sort(private val dataType: String) {
+class Sort(private val data: String) {
     private var numInput = 0
     private var maxInput: String? = ""
     private var occurrences = 0
@@ -8,8 +8,17 @@ class Sort(private val dataType: String) {
     private var listInput = mutableListOf<String>()
     private var template = ""
 
+    enum class DataType {
+        LONG, LINE, WORD;
+
+        fun checkType(type: String): Boolean {
+            values().forEach { value -> if(value.name.equals(type, true)) return true }
+            return false
+        }
+    }
+
     override fun toString(): String {
-        template = when (dataType) {
+        template = when (data) {
             "long" -> {
                 "Total number: $numInput.\n" +
                 "The greatest number: $maxInput ($occurrences time(s), $percent%)."
@@ -30,15 +39,19 @@ class Sort(private val dataType: String) {
 
     private fun inputs() {
         val scanner = Scanner(System.`in`)
-        when (dataType) {
-            "long", "word" -> while (scanner.hasNext()) { listInput.add(scanner.next()) }
-            "line" -> while (scanner.hasNextLine()) { listInput.add(scanner.nextLine()) }
+        when (data) {
+            "long", "word" -> while (scanner.hasNext()) {
+                listInput.add(scanner.next())
+            }
+            "line" -> while (scanner.hasNextLine()) {
+                listInput.add(scanner.nextLine())
+            }
         }
     }
 
     private fun statistic() {
         numInput = listInput.size
-        maxInput = when (dataType) {
+        maxInput = when (data) {
             "long" -> listInput.maxByOrNull { it.toInt() }
             "line", "word" -> listInput.maxByOrNull { it.length }
             else -> ""
