@@ -7,48 +7,41 @@ class Sort(private val command: Array<String>) {
     private var percent = 0
     private var listInput = mutableListOf<String>()
 
-    override fun toString(): String {
-        return when {
-            "long" in command -> {
-                "Total number: $numInput.\n" +
-                if ("-sortIntegers" in command)
-                    "Sorted data: ${listInput.sortedBy { it.toInt() }.joinToString(" ")}"
-                else
-                    "The greatest number: $maxInput ($occurrences time(s), $percent%).\n"
-            } "line" in command -> {
-                "Total lines: $numInput.\n" +
-                if ("-sortIntegers" in command)
-                    "Sorted data: ${listInput.sortedBy { it.toInt() }.joinToString(" ")}"
-                else
-                    "The longest line:\n$maxInput\n($occurrences time(s), $percent%)."
-            } "word" in command -> {
-                "Total lines: $numInput.\n" +
-                if ("-sortIntegers" in command)
-                    "Sorted data: ${listInput.sortedBy { it.toInt() }.joinToString(" ")}"
-                else
-                    "The longest word: $maxInput ($occurrences time(s), $percent%)."
-            } else -> {
-                "Total number: $numInput.\n" +
-                if ("-sortIntegers" in command)
-                    "Sorted data: ${listInput.sortedBy { it.toInt() }.joinToString(" ")}"
-                else
-                    "The greatest number: $maxInput ($occurrences time(s), $percent%).\n"
-            }
-        }
+    private fun getDataType(input: Array<String>): String {
+       return when (input.size) {
+           3, 2 -> input[1]
+           else -> input[0]
+       }
     }
 
-    private fun isSort(): String {
-        return if ("-sortIntegers" in command)
-            "Sorted data: ${listInput.sortedBy { it.toInt() }.joinToString(" ")}"
-        else
-            "The greatest number: $maxInput ($occurrences time(s), $percent%).\n"
+    private fun isSort() {
+        val dataType = getDataType(command)
+        val word = when (dataType) {
+            "long" -> "number"
+            "line", "word" -> "lines"
+            else -> "number"
+        }
+        val firstLine = "Total $word: $numInput.\n"
+        val secondLine = when {
+            command.contains("-sortIntegers") -> {
+                "Sorted data: ${listInput.sortedBy { it.toInt() }.joinToString(" ")}"
+            } else -> {
+                when (dataType) {
+                    "long" -> "The greatest number: $maxInput ($occurrences time(s), $percent%).\n"
+                    "line" -> "The longest line:\n$maxInput\n($occurrences time(s), $percent%)."
+                    "word" -> "The longest word: $maxInput ($occurrences time(s), $percent%)."
+                    else -> "The greatest number: $maxInput ($occurrences time(s), $percent%).\n"
+                }
+            }
+
+        }
+        println(firstLine + secondLine)
     }
 
     private fun inputs() {
         val scanner = Scanner(System.`in`)
         when {
-//            "long" in command || "word" in command -> while (scanner.hasNext()) { listInput.add(scanner.next()) }
-            "line" in command -> while (scanner.hasNextLine()) { listInput.add(scanner.nextLine()) }
+            command.contains("line") -> while (scanner.hasNextLine()) { listInput.add(scanner.nextLine()) }
             else -> while (scanner.hasNext()) { listInput.add(scanner.next()) }
         }
     }
@@ -56,15 +49,14 @@ class Sort(private val command: Array<String>) {
     private fun statistic() {
         numInput = listInput.size
         maxInput = when {
-//            "long" in command -> listInput.maxByOrNull { it.toInt() } ?: "0"
-            "line" in command || "word" in command -> listInput.maxByOrNull { it.length } ?: "0"
+            command.contains("line") || command.contains("word") -> listInput.maxByOrNull { it.length } ?: "0"
             else -> listInput.maxByOrNull { it.toInt() } ?: "0"
         }
         occurrences = Collections.frequency(listInput, maxInput)
         percent = (occurrences / numInput.toDouble() * 100).toInt()
     }
 
-    fun startSorting() { inputs(); statistic(); println(this) }
+    fun startSorting() { inputs(); statistic(); isSort() }
 }
 
 fun main(args: Array<String>) = Sort(args).startSorting()
