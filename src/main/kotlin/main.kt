@@ -1,38 +1,10 @@
 import java.util.*
+import kotlin.math.round
 
 class Sort(private val command: Array<String>) {
     private var listInput = mutableListOf<String>()
 
-    private fun getDataType(input: Array<String>): String {
-       return when (input.size) {
-           3, 2 -> input[1]
-           else -> input[0]
-       }
-    }
-
-    private fun isSort(numberOfInput: Int, max: String, timesOccurred: Int, percentage: Int) {
-        val dataType = getDataType(command)
-        val word = when (dataType) {
-            "long" -> "number"
-            "line", "word" -> "lines"
-            else -> "number"
-        }
-        val firstLine = "Total $word: $numberOfInput.\n"
-        val secondLine = when {
-            command.contains("-sortIntegers") -> {
-                "Sorted data: ${listInput.sortedBy { it.toInt() }.joinToString(" ")}"
-            } else -> {
-                when (dataType) {
-                    "long" -> "The greatest number: $max ($timesOccurred time(s), $percentage%).\n"
-                    "line" -> "The longest line:\n$max\n($timesOccurred time(s), $percentage%)."
-                    "word" -> "The longest word: $max ($timesOccurred time(s), $percentage%)."
-                    else -> "The greatest number: $max ($timesOccurred time(s), $percentage%).\n"
-                }
-            }
-
-        }
-        println(firstLine + secondLine)
-    }
+    fun startSorting() { inputs(); sorting(); }
 
     private fun inputs() {
         val scanner = Scanner(System.`in`)
@@ -42,18 +14,66 @@ class Sort(private val command: Array<String>) {
         }
     }
 
-    private fun statistic() {
-        val numInput = listInput.size
-        val maxInput = when {
-            command.contains("line") || command.contains("word") -> listInput.maxByOrNull { it.length } ?: "0"
-            else -> listInput.maxByOrNull { it.toInt() } ?: "0"
+    private fun sorting() {
+        val (order, dataType) = getData()
+        val wordToUse = when (dataType) {
+            "long" -> "numbers"
+            "line" -> "lines"
+            "word" -> "words"
+            else -> "numbers"
         }
-        val occurrences = Collections.frequency(listInput, maxInput)
-        val percent = (occurrences / numInput.toDouble() * 100).toInt()
-        return isSort(numInput, maxInput, occurrences, percent)
+        val firstLine = "Total $wordToUse: ${listInput.size}.\n"
+        var secondLine = StringBuilder()
+        when (order) {
+            "natural" -> {
+                val list = sortByNatural(listInput)
+                secondLine =
+                if(dataType != "lines") {
+                    secondLine.append("Sorted data: ${list.joinToString(" ")}")
+                } else {
+                    secondLine.append("Sorted data:\n${list.joinToString("\n")}")
+                }
+            }
+            "byCount" -> {
+                val list = sortByCount(listInput).toList()
+                    .sortedBy { it.second }
+                    .toMap()
+                list.forEach { (element, count) ->
+                    val percentage = round(count.div(listInput.size.toDouble()) * 100).toInt()
+                    secondLine.appendLine("$element: $count time(s), $percentage%")
+                }
+            }
+        }
+        println(firstLine + secondLine)
     }
 
-    fun startSorting() { inputs(); statistic(); }
+    private fun getData(): List<String> {
+        val order = if("natural" in command) "natural" else if("byCount" in command) "byCount" else "natural"
+        val dataType = when {
+            "long" in command -> "long"
+            "word" in command -> "word"
+            "lines" in command -> "lines"
+            else -> "word"
+        }
+        return listOf(order, dataType)
+    }
+
+    private fun sortByNatural(list: MutableList<String>): List<String> {
+        return when {
+            "long" in command || "word" in command -> list.sortedBy { it.toInt() }
+            else -> list.sortedByDescending { it.length }
+        }
+    }
+
+    private fun sortByCount(list: MutableList<String>): SortedMap<String, Int> {
+        val (_, dataType) = getData()
+        val countOccur = list.groupingBy { it }.eachCount()
+        return when (dataType) {
+            "word" -> countOccur.toSortedMap(compareBy<String> { it }.thenBy { it })
+            "line" -> countOccur.toSortedMap(compareBy<String> { it.length }.thenBy { it })
+            else -> countOccur.toSortedMap(compareBy<String> { it.toInt() }.thenBy { it })
+        }
+    }
 }
 
 fun main(args: Array<String>) = Sort(args).startSorting()
