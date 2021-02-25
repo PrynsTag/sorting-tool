@@ -1,5 +1,6 @@
 import java.util.*
 import kotlin.math.round
+import kotlin.system.exitProcess
 
 class Sort(private val command: Array<String>) {
     private var listInput = mutableListOf<String>()
@@ -8,8 +9,19 @@ class Sort(private val command: Array<String>) {
 
     private fun inputs() {
         val scanner = Scanner(System.`in`)
+        var newNum = ""
         when {
             command.contains("line") -> while (scanner.hasNextLine()) { listInput.add(scanner.nextLine()) }
+            command.contains("long") -> while (scanner.hasNext()) {
+                try {
+                    newNum = scanner.next()
+                    newNum.toInt()
+                    listInput.add(newNum)
+                } catch (e: NumberFormatException) {
+                    println("\"$newNum\" is not a long. It will be skipped.")
+                    continue
+                }
+            }
             else -> while (scanner.hasNext()) { listInput.add(scanner.next()) }
         }
     }
@@ -28,17 +40,12 @@ class Sort(private val command: Array<String>) {
             "natural" -> {
                 val list = sortByNatural(listInput)
                 secondLine =
-                if(dataType != "lines") {
-                    secondLine.append("Sorted data: ${list.joinToString(" ")}")
-                } else {
-                    secondLine.append("Sorted data:\n${list.joinToString("\n")}")
-                }
+                    if(dataType != "lines") secondLine.append("Sorted data: ${list.joinToString(" ")}")
+                    else secondLine.append("Sorted data:\n${list.joinToString("\n")}")
             }
             "byCount" -> {
-                val list = sortByCount(listInput).toList()
-                    .sortedBy { it.second }
-                    .toMap()
-                list.forEach { (element, count) ->
+                val map = sortByCount(listInput).toList().sortedBy { it.second }.toMap()
+                map.forEach { (element, count) ->
                     val percentage = round(count.div(listInput.size.toDouble()) * 100).toInt()
                     secondLine.appendLine("$element: $count time(s), $percentage%")
                 }
@@ -48,13 +55,26 @@ class Sort(private val command: Array<String>) {
     }
 
     private fun getData(): List<String> {
-        val order = if("natural" in command) "natural" else if("byCount" in command) "byCount" else "natural"
-        val dataType = when {
-            "long" in command -> "long"
-            "word" in command -> "word"
-            "lines" in command -> "lines"
-            else -> "word"
+        val order: String = when {
+            command.contains("-sortingType") -> {
+                when {
+                    command.contains("natural") -> "natural"
+                    command.contains("byCount") -> "byCount"
+                    else -> { println("No sorting type defined!"); exitProcess(1) }
+                }
+            } else -> "natural"
         }
+        val dataType: String = when {
+            command.contains("-dataType") -> {
+                when {
+                    command.contains("long") -> "long"
+                    command.contains("word") -> "word"
+                    command.contains("line") -> "line"
+                    else -> { println("No data type defined!"); exitProcess(1) }
+                }
+            } else -> "word"
+        }
+
         return listOf(order, dataType)
     }
 
@@ -65,12 +85,12 @@ class Sort(private val command: Array<String>) {
         }
     }
 
-    private fun sortByCount(list: MutableList<String>): SortedMap<String, Int> {
+    private fun sortByCount(list: MutableList<String>): Map<String, Int> {
         val (_, dataType) = getData()
         val countOccur = list.groupingBy { it }.eachCount()
         return when (dataType) {
             "word" -> countOccur.toSortedMap(compareBy<String> { it }.thenBy { it })
-            "line" -> countOccur.toSortedMap(compareBy<String> { it.length }.thenBy { it })
+            "line" -> countOccur.toList().sortedWith(compareBy({ it.second }, { it.first })).toMap()
             else -> countOccur.toSortedMap(compareBy<String> { it.toInt() }.thenBy { it })
         }
     }
