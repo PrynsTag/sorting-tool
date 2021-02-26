@@ -1,3 +1,4 @@
+import java.io.File
 import java.util.*
 import kotlin.math.round
 import kotlin.system.exitProcess
@@ -11,6 +12,8 @@ class Sort(private val command: Array<String>) {
         val scanner = Scanner(System.`in`)
         var newNum = ""
         when {
+            command.contains("-inputFile") -> processFile(command[command.indexOf("-inputFile") + 1], "-inputFile")
+            command.contains("-outputFile") -> processFile(command[command.indexOf("-outputFile") + 1], "-outputFile")
             command.contains("line") -> while (scanner.hasNextLine()) { listInput.add(scanner.nextLine()) }
             command.contains("long") -> while (scanner.hasNext()) {
                 try {
@@ -23,6 +26,25 @@ class Sort(private val command: Array<String>) {
                 }
             }
             else -> while (scanner.hasNext()) { listInput.add(scanner.next()) }
+        }
+    }
+
+    private fun processFile(filename: String, action: String) {
+        val (_, dataType) = getData()
+        if (action == "-inputFile") {
+            when (dataType) {
+                "long" -> {
+                    File(filename).readText().let { it ->
+                        val newList = it.split(" ").map { it.toInt().toString() }
+                        listInput = newList.toMutableList()
+                    }
+                } "word" -> {
+                    File(filename).readText().let { it ->
+                        val newList = it.split(" ")
+                        listInput = newList.toMutableList()
+                    }
+                } "line" -> { File(filename).forEachLine { line -> listInput.add(line) } }
+            }
         }
     }
 
