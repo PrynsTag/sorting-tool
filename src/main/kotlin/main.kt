@@ -5,7 +5,7 @@ import kotlin.system.exitProcess
 
 class Sort(private val command: Array<String>) {
     private var listInput = mutableListOf<String>()
-
+    var logging = ""
     fun startSorting() { inputs(); sorting(); }
 
     private fun inputs() {
@@ -35,17 +35,17 @@ class Sort(private val command: Array<String>) {
             when (dataType) {
                 "long" -> {
                     File(filename).readText().let { it ->
-                        val newList = it.split(" ").map { it.toInt().toString() }
+                        val newList = it.split(" ").map { "${it.toInt()}" }
                         listInput = newList.toMutableList()
                     }
                 } "word" -> {
-                    File(filename).readText().let { it ->
+                    File(filename).readText().let {
                         val newList = it.split(" ")
                         listInput = newList.toMutableList()
                     }
                 } "line" -> { File(filename).forEachLine { line -> listInput.add(line) } }
             }
-        }
+        } else if (action == "-outputFile") File(filename).writeText(logging)
     }
 
     private fun sorting() {
@@ -73,7 +73,8 @@ class Sort(private val command: Array<String>) {
                 }
             }
         }
-        println(firstLine + secondLine)
+        if (!command.contains("-outputFile")) println(firstLine + secondLine)
+        else logging = firstLine + secondLine
     }
 
     private fun getData(): List<String> {
