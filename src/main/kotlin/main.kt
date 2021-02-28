@@ -6,14 +6,18 @@ import kotlin.system.exitProcess
 class Sort(private val command: Array<String>) {
     private var listInput = mutableListOf<String>()
     var logging = ""
+
     fun startSorting() { inputs(); sorting(); }
 
     private fun inputs() {
         val scanner = Scanner(System.`in`)
         var newNum = ""
         when {
-            command.contains("-inputFile") -> processFile(command[command.indexOf("-inputFile") + 1], "-inputFile")
-            command.contains("-outputFile") -> processFile(command[command.indexOf("-outputFile") + 1], "-outputFile")
+            command.contains("-inputFile") -> {
+                processFile(command[command.indexOf("-inputFile") + 1], "-inputFile")
+                if (command.contains("-outputFile"))
+                    processFile(command[command.indexOf("-outputFile") + 1], "-outputFile")
+            }
             command.contains("line") -> while (scanner.hasNextLine()) { listInput.add(scanner.nextLine()) }
             command.contains("long") -> while (scanner.hasNext()) {
                 try {
@@ -31,21 +35,31 @@ class Sort(private val command: Array<String>) {
 
     private fun processFile(filename: String, action: String) {
         val (_, dataType) = getData()
+
         if (action == "-inputFile") {
+            val scannerFile = File(filename)
+            val inputScanner = Scanner(scannerFile)
+
             when (dataType) {
-                "long" -> {
-                    File(filename).readText().let { it ->
-                        val newList = it.split(" ").map { "${it.toInt()}" }
-                        listInput = newList.toMutableList()
+                "long", "word" -> {
+                    scannerFile.readText().let {
+                        while (inputScanner.hasNext()) {
+                            listInput.add(inputScanner.next())
+                        }
                     }
-                } "word" -> {
-                    File(filename).readText().let {
-                        val newList = it.split(" ")
-                        listInput = newList.toMutableList()
+                } "line" -> {
+                    scannerFile.readText().let {
+                        while (inputScanner.hasNextLine()) {
+                            listInput.add(inputScanner.nextLine())
+                        }
                     }
-                } "line" -> { File(filename).forEachLine { line -> listInput.add(line) } }
+                }
             }
-        } else if (action == "-outputFile") File(filename).writeText(logging)
+        } else if (action == "-outputFile") {
+            sorting()
+            File(filename).writeText(logging)
+            exitProcess(1)
+        }
     }
 
     private fun sorting() {
